@@ -1,14 +1,8 @@
 open util/ordering[State]
 
 sig State {
-	graph: set Edge,
-	tree: set Edge
-}
-
-sig Event {
-	pre: State,
-	post: State,
-	add: Edge
+	graph: set Node,
+	tree: set Node
 }
 
 sig Node {
@@ -22,27 +16,57 @@ sig Edge {
 }
 
 fact initialState {
-	no first.tree
-	Edge in first.graph
+	one first.tree
+	Node in first.graph
 }
+
+sig Event {
+	pre: State,
+	post: State,
+	add: Node
+} {
+
+	add in pre.graph
+	add not in pre.tree
+	add in post.tree
+	
+	let cheapestEdge = Edge | 
+
+}
+
+fun getCheapAdjacentEdges[t: set Node] : Edge {
+	--TODO: add cheap property
+	{e: Edge | (e.node1 in t and e.node2 not in t) or (e.node1 not in t and e.node2 in t)}
+}
+
+/*
+fun cheapestEdge[edges: set Edge] : Edge {
+	{
+}
+*/
 
 fact trace {
 	all s1: State - last | let s2 = s1.next |
 		one e: Event | e.pre = s1 and e.post = s2 
 }
 
+
+
+
 fact finalState {
 	no last.graph
-	Edge in last.tree
+	Node in last.tree
 }
 
+/*
 fact undirectedEdge {
-	all n1, n2: Node | one e: Edge | (n1 + n2) in (e.node1 + e.node2)
+	all disj n1, n2: Node | lone e: Edge | (n1 + n2) in (e.node1 + e.node2)
 }
+*/
 
 fact positiveEdges {
 	all e: Edge | e.weight > 0
 }
 
 
-run for exactly ... {}
+run {} for 12 but exactly 3 Node, 5 Edge
