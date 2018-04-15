@@ -1,43 +1,74 @@
 open util/ordering[State]
 
 sig State {
-	graph: set Node,
-	tree: set Node
+	graph: set Edge,
+	tree_edges: set Edge,
+	tree_nodes: set Node
+} {
+	consistent[tree_edges, tree_nodes]
 }
 
-sig Node {
-	--edges: set Edge
+pred consistent[edges : set Edge, nodes: set Node] {
+	all e: Edge | e in edges implies e.node1 in nodes and e.node2 in nodes
 }
+
+sig Node { }
 
 sig Edge {
 	node1: one Node,
 	node2: one Node,
 	weight: Int
+} {
+	node1 != node2
 }
 
 fact initialState {
-	one first.tree
-	Node in first.graph
+	one first.tree_nodes
+	Edge in first.graph
+	no first.tree_edges
 }
 
 sig Event {
 	pre: State,
 	post: State,
-	add: Node
+	add: Edge
 } {
-
-	add in pre.graph
-	add not in pre.tree
-	add in post.tree
-	
-	let cheapestEdge = Edge | 
-
+	(add.node1 in pre.tree_nodes and add.node2 not in pre.tree_nodes) or (add.node1 not in pre.tree_nodes and add.node2 in pre.tree_nodes)
+--	let adjacentEdges =  set Edge | {
+--		add in adjacentEdges
+--		all e: adjacentEdges - add | add.weight <= e.weight
+--	}
+	let adjacentEdges = pre.graph | {
+		all e: adjacentEdges | isAdjacent[pre, e]
+		add not in pre.tree_edges
+		--add in post.tree_edges
+		post.tree_edges = pre.tree_edges + add
+	}
 }
 
-fun getCheapAdjacentEdges[t: set Node] : Edge {
+pred isAdjacent[s: State, e: Edge] {
+	e.node1 in s.tree_nodes and e.node2 not in s.tree_nodes or {
+		e.node1 not in s.tree_nodes and e.node2 in s.tree_nodes
+	}
+}
+
+/*
+fun getCheapAdjacentEdges[t: set Edge, e: Edge] : set Edge {
 	--TODO: add cheap property
-	{e: Edge | (e.node1 in t and e.node2 not in t) or (e.node1 not in t and e.node2 in t)}
+	{(e.node1 in t and e.node2 not in t) or (e.node1 not in t and e.node2 in t)}
+}	{t -
+*/ 
+
+fun getAdjacentEdges[s: State] : set Edge {
+	/*
+	let free_nodes = {Node - (t.node1 + t.node2)} | {
+		{node1.free_nodes + node2.free_nodes}
+	}
+	*/
+	{e: Edge | e.node1 in s.tree_nodes and e.node2 not in s.tree_nodes or e.node1 not in s.tree_nodes and e.node2 in s.tree_nodes}
 }
+
+
 
 /*
 fun cheapestEdge[edges: set Edge] : Edge {
@@ -54,8 +85,7 @@ fact trace {
 
 
 fact finalState {
-	no last.graph
-	Node in last.tree
+	Node in last.tree_nodes
 }
 
 /*
@@ -69,4 +99,4 @@ fact positiveEdges {
 }
 
 
-run {} for 12 but exactly 3 Node, 5 Edge
+run {} for 3 but exactly 3 Node, 5 Edge
