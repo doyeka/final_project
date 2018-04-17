@@ -33,18 +33,16 @@ sig Event {
 	post: State,
 	add: Edge
 } {
-	(add.node1 in pre.tree_nodes and add.node2 not in pre.tree_nodes) or (add.node1 not in pre.tree_nodes and add.node2 in pre.tree_nodes)
---	let adjacentEdges =  set Edge | {
---		add in adjacentEdges
---		all e: adjacentEdges - add | add.weight <= e.weight
---	}
-	let adjacentEdges = pre.graph | {
-		all e: adjacentEdges | isAdjacent[pre, e]
-		add not in pre.tree_edges
-		--add in post.tree_edges
-		post.tree_edges = pre.tree_edges + add
-	}
-}
+	
+	add not in pre.tree_edges
+	post.tree_edges = pre.tree_edges + add
+	post.tree_nodes = pre.tree_nodes + add.node1 + add.node2
+	post.graph = pre.graph
+	-- add must be an edge adjacent to pre.tree and it has to be the cheapest one
+	isAdjacent[pre, add]
+	isCheapestEdge[pre, add]
+}	
+
 
 pred isAdjacent[s: State, e: Edge] {
 	e.node1 in s.tree_nodes and e.node2 not in s.tree_nodes or {
@@ -52,29 +50,12 @@ pred isAdjacent[s: State, e: Edge] {
 	}
 }
 
-/*
-fun getCheapAdjacentEdges[t: set Edge, e: Edge] : set Edge {
-	--TODO: add cheap property
-	{(e.node1 in t and e.node2 not in t) or (e.node1 not in t and e.node2 in t)}
-}	{t -
-*/ 
-
-fun getAdjacentEdges[s: State] : set Edge {
-	/*
-	let free_nodes = {Node - (t.node1 + t.node2)} | {
-		{node1.free_nodes + node2.free_nodes}
+pred isCheapestEdge[s: State, cheapest: Edge] {
+	no e: s.graph - s.tree_edges | {
+		e.weight < cheapest.weight
+		isAdjacent[s, e]
 	}
-	*/
-	{e: Edge | e.node1 in s.tree_nodes and e.node2 not in s.tree_nodes or e.node1 not in s.tree_nodes and e.node2 in s.tree_nodes}
 }
-
-
-
-/*
-fun cheapestEdge[edges: set Edge] : Edge {
-	{
-}
-*/
 
 fact trace {
 	all s1: State - last | let s2 = s1.next |
@@ -98,5 +79,6 @@ fact positiveEdges {
 	all e: Edge | e.weight > 0
 }
 
+// TODO: Show how it fails for negative edge weights? Or is that only dijkstras?
 
-run {} for 3 but exactly 3 Node, 5 Edge
+run {} for 5 but exactly 5 Node, 7 Edge
