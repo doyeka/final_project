@@ -15,10 +15,13 @@ pred consistent[edges : set Edge, nodes: set Node] {
 sig Node { }
 
 sig Edge {
+	--QUESTION: what does "one" do in this case?
 	node1: one Node,
 	node2: one Node,
 	weight: Int
 } {
+	--QUESTION: can we have self loops?
+	--QUESTION: does the graph have to contain every node? Does it need to be connected? Probs yes
 	node1 != node2
 }
 
@@ -26,6 +29,11 @@ fact initialState {
 	one first.tree_nodes
 	Edge in first.graph
 	no first.tree_edges
+}
+
+fact trace {
+	all s1: State - last | let s2 = s1.next |
+		one e: Event | e.pre = s1 and e.post = s2 
 }
 
 sig Event {
@@ -56,13 +64,6 @@ pred isCheapestEdge[s: State, cheapest: Edge] {
 		isAdjacent[s, e]
 	}
 }
-
-fact trace {
-	all s1: State - last | let s2 = s1.next |
-		one e: Event | e.pre = s1 and e.post = s2 
-}
-
-
 
 
 fact finalState {
