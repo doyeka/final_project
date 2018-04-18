@@ -16,8 +16,8 @@ sig Node { }
 
 sig Edge {
 	--QUESTION: what does "one" do in this case?
-	node1: one Node,
-	node2: one Node,
+	node1: Node,
+	node2: Node,
 	weight: Int
 } {
 	--QUESTION: can we have self loops?
@@ -41,7 +41,6 @@ sig Event {
 	post: State,
 	add: Edge
 } {
-	
 	add not in pre.tree_edges
 	post.tree_edges = pre.tree_edges + add
 	post.tree_nodes = pre.tree_nodes + add.node1 + add.node2

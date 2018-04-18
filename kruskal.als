@@ -20,17 +20,16 @@ sig Edge {
 
 sig State {
 	graph: set Edge,
-	
 	--QUESTION: does this make sense or should we do a cycle-detecting algorithm instead of actually modeling trees?
 	trees: set Tree
 	--tree_nodes: set Node
 }
 
-
 sig Tree {
 	tree_edges: set Edge,
 	tree_nodes: set Node
 }
+
 fact initialState {
 	Edge in first.graph
 	no first.tree
