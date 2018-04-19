@@ -19,10 +19,10 @@ sig Edge {
 }
 
 sig State {
-	graph: set Edge,
-	--QUESTION: does this make sense or should we do a cycle-detecting algorithm instead of actually modeling trees?
-	trees: set Tree
-	--tree_nodes: set Node
+	remainingEdges: set Edge,
+	forest: set Tree,
+	--QUESTION: does this make sense or should 
+	--we do a cycle-detecting algorithm instead of actually modeling trees?
 }
 
 sig Tree {
@@ -30,9 +30,35 @@ sig Tree {
 	tree_nodes: set Node
 }
 
+sig Event {
+	pre: State,
+	post: State,
+	add: Edge
+} {
+	-- Steps:
+	-- Identify minimum weight edge in the graph.
+	-- Remove the edge from remainingEdges.
+	-- If the removed edge connectes two different trees, add the edge into the forest
+-- 	   and combine the two trees into one.
+
+}
+
+-- preds
+
+pred consistent[edges : set Edge, nodes: set Node] {
+	all e: Edge | e in edges implies e.node1 in nodes and e.node2 in nodes
+}
+
+-- facts
+
+-- TODO: Constraints on Nodes/Edges/Trees so they are consistent between sigs.
+--		 Fill in event signature.
+
 fact initialState {
+	some first.forest
+	all t: Tree | #(t.tree_nodes) = 1
 	Edge in first.graph
-	no first.tree
+	consistent[first.graph, Node]
 }
 
 fact trace {
@@ -40,23 +66,9 @@ fact trace {
 		one e: Event | e.pre = s1 and e.post = s2 
 }
 
-sig Event {
-	pre: State,
-	post: State,
-	add: Edge
-} {
-	post.graph = pre.graph - add
-
-	add not in pre.tree
-	add in pre.graph
-	post.tree = pre.tree + add
-
-	-- add must be an edge adjacent to pre.tree and it has to be the cheapest one
-	isCheapestEdge[pre, add]
-}
-
 fact finalState {
-	Edge in last.tree
+	#(last.forest) = 1
+	one tree: Tree | (tree in last.forest) and (Node in tree.tree_nodes)
 }
 
 
