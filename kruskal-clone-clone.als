@@ -31,10 +31,13 @@ sig Event {
 	-- If the removed edge connectes two different trees, add the edge into the forest
 	-- and combine the two trees into one.
 	add in pre.graph
-	#(add) = 1
+	add not in pre.tree
+	#(add.Node.Int) = 1 and #(add[Node][Int])	= 1   --For some reason "#" only works for unary sets
 	smallestEdge[add, pre.graph]
-	--post.graph = pre.graph - add - (add.Node.Node)->(~(Int.add))
-	--post.tree = pre.tree + add + (add.Node.Node)->(~(Int.add)) 
+	let reverseAdd = add[Node][Int] -> (~(add.Node)) | {
+		post.graph = pre.graph - add - reverseAdd
+		post.tree = pre.tree + add + reverseAdd
+	}
 
 }
 
@@ -64,6 +67,13 @@ pred isConnected[g: Int -> Node -> Node] {
 }
 */
 
+
+-- funs
+fun unweightedEdges[t: Node -> Int -> Node]: Node -> Node {
+	{u, v: Node | some i: Int | u -> i -> v in t}
+}
+
+--facts
 
 fact initialState {
 	no first.tree
