@@ -33,16 +33,35 @@ sig Event {
 	add in pre.graph
 	add not in pre.tree
 	#(add.Node.Int) = 1 and #(add[Node][Int])	= 1   --For some reason "#" only works for unary sets
-	smallestEdge[add, pre.graph]
+	
 	let reverseAdd = add[Node][Int] -> (~(add.Node)) | {
 		post.graph = pre.graph - add - reverseAdd
 		post.tree = pre.tree + add + reverseAdd
 	}
 
+	smallestEdge[add, pre.graph]
+
+	/*
+	Issue: Change so that trees can be made with low cost self loops
+
+	Right now, this is over-constrained to the point that the lowest
+	cost tree must just *happen* to be acyclic and perfect.
+
+	Proposed solution: We could change it so that whenever add 
+	creates a cycle, we just remove the edge from the graph.
+	*/
+	acyclic[pre.tree] and acyclic[post.tree]
+
 }
 
 pred smallestEdge[add: Node -> Int -> Node, g: Node -> Int -> Node] {
 	all i: g.Node[Node] - add.Node[Node] | i > add.Node[Node]
+}
+
+pred acyclic[t:  Node -> Int -> Node] {
+	let t' = unweightedEdges[t] | {
+		all u, v: Node | u -> v in t' implies v not in u.^(t' - (u -> v))
+	}
 }
 
 fact positiveEdges {
@@ -61,11 +80,10 @@ fact edgeProperties {
 
 -- TODO: Constraints on Nodes/Edges/Trees so they are consistent between sigs.
 --		 Fill in event signature.
-/*
-pred isConnected[g: Int -> Node -> Node] {
-	all u,v: Node | (u->v) in ^(g[Int])
+
+pred isConnected[g: Node -> Int -> Node] {
+	all disj u,v: Node | (u->v) in ^(unweightedEdges[g])
 }
-*/
 
 
 -- funs
@@ -77,7 +95,7 @@ fun unweightedEdges[t: Node -> Int -> Node]: Node -> Node {
 
 fact initialState {
 	no first.tree
-	--isConnected[first.graph]
+	isConnected[first.graph]
 }
 
 fact trace {
@@ -88,7 +106,7 @@ fact trace {
 
 fact finalState {
 	Node in last.tree[Node][Int]
-	--isConnected[last.tree]
+	isConnected[last.tree]
 }
 
 run {} for 5 but 5 Node

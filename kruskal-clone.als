@@ -42,6 +42,8 @@ pred smallestEdge[add: Int -> Node -> Node, g: Int -> Node -> Node] {
 	all i: g.Node.Node - add.Node.Node | i > add.Node.Node
 }
 
+-- facts
+
 fact positiveEdges {
 	all i : State.graph.Node.Node | i > 0
 }
@@ -52,7 +54,6 @@ fact edgeProperties {
 		s->i->u->v in graph implies s->i->v->u in graph and {		--bidirectional
 			no j: Int - i | s->j->v->u in graph
 		}
-		
 	}
 }
 
