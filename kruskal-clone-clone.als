@@ -34,12 +34,17 @@ sig Event {
 	add not in pre.tree
 	#(add.Node.Int) = 1 and #(add[Node][Int])	= 1   --For some reason "#" only works for unary sets
 	
+	smallestEdge[add, pre.graph]
+
 	let reverseAdd = add[Node][Int] -> (~(add.Node)) | {
 		post.graph = pre.graph - add - reverseAdd
-		post.tree = pre.tree + add + reverseAdd
+		acyclic[pre.tree + add + reverseAdd] implies {
+			post.tree = pre.tree + add + reverseAdd
+		}
+		not acyclic[pre.tree + add + reverseAdd] implies {
+			post.tree = pre.tree
+		}
 	}
-
-	smallestEdge[add, pre.graph]
 
 	/*
 	Issue: Change so that trees can be made with low cost self loops
