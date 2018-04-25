@@ -34,7 +34,7 @@ sig Event {
 	add not in pre.tree
 	#(add.Node.Int) = 1 and #(add[Node][Int])	= 1   --For some reason "#" only works for unary sets
 	
-	smallestEdge[add, pre.graph]
+	cheapestEdge[add, pre.graph]
 
 	let reverseAdd = add[Node][Int] -> (~(add.Node)) | {
 		post.graph = pre.graph - add - reverseAdd
@@ -59,7 +59,7 @@ sig Event {
 
 }
 
-pred smallestEdge[add: Node -> Int -> Node, g: Node -> Int -> Node] {
+pred cheapestEdge[add: Node -> Int -> Node, g: Node -> Int -> Node] {
 	all i: g.Node[Node] - add.Node[Node] | i > add.Node[Node]
 }
 
