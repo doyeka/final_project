@@ -10,10 +10,7 @@ open util/ordering[State]
 
 */
 
-sig Node {
-	--edges: Int -> Node
-	--edges: Node -> Int
-}
+sig Node {}
 
 sig State {
 	graph: Node -> Int -> Node,

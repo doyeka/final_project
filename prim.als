@@ -59,7 +59,6 @@ pred isAdjacent[s: State, e: Node -> Int -> Node] {
 }
 */
 pred isAdjacent[s: State, u: Node, v: Node] {
-	
 	let tree_nodes = s.tree[Node][Int] + First | {
 		u in tree_nodes and v not in tree_nodes or {
 			u not in tree_nodes and v in tree_nodes

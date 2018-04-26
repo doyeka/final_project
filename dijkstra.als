@@ -51,6 +51,12 @@ sig Event {
 	--TODO: update distance variable of neighbors if new, shorter distance is possible
 	-- choose shortest neighbor and add it to the path
 	-- set current to the next node along the path
+	all n: pre.graph[current][Int] | n in pre.unvisited |
+		n.infinite = 1 implies {
+			post.graph[current][Int]
+-- TODO: Specify how to access the post graph version of a node.
+		}
+	}
 }
 
 --facts
@@ -69,7 +75,7 @@ fact initialState {
 }
 
 fact finalState {
-	pre.last.current = Sink
+	post.last.current = Sink
 	--Sink not in last.unvisited
 }
 
