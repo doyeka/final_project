@@ -70,7 +70,7 @@ pred acyclic[t:  Node -> Int -> Node] {
 }
 
 fact positiveEdges {
-	all i : State.graph.Node[Node] | i > 0
+	
 }
 
 
@@ -79,8 +79,9 @@ fact edgeProperties {
 		s->u->i->v in graph implies s->v->i->u in graph and {		--bidirectional
 			no j: Int - i | s->v->j->u in graph
 		}
-		
 	}
+	-- positive edges
+	all i : State.graph.Node[Node] | i > 0
 }
 
 -- TODO: Constraints on Nodes/Edges/Trees so they are consistent between sigs.
