@@ -58,7 +58,11 @@ pred isAdjacent[s: State, u: Node, v: Node] {
 
 
 pred isCheapestEdge[s: State, add: Node -> Int -> Node] {
-	all disj u, v: Node | isAdjacent[s, u, v] and {
+	/*
+	 Issue: we want all the nodes such that they are adjacent, but we don't require all 
+	nodes to be adjacent...
+	*/
+	all disj u, v: Node | isAdjacent[s, u, v] and | {
 		getWeight[s.graph + s.tree, u -> v] >= add.Node[Node]
 	}
 }
