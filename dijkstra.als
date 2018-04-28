@@ -27,7 +27,8 @@ open util/ordering[State]
 
 sig Node {
 	distance: Int,
-	infinite: Int
+	infinite: Int,
+	previous: Node
 }
 
 one sig Source extends Node {}
@@ -47,16 +48,26 @@ sig Event {
 	current: Node
 }{
 	current in pre.unvisited
+	--current.infinite = 0
+	no n: pre.unvisited - current | n.distance < current.distance and n.infinite = 1
+
+	all v : Node | isAdjacent[pre, current, v] implies post.
+
 	post.unvisited = pre.unvisited - current
+	post.graph = pre.graph
+	
 	--TODO: update distance variable of neighbors if new, shorter distance is possible
 	-- choose shortest neighbor and add it to the path
 	-- set current to the next node along the path
+	/*
 	all n: pre.graph[current][Int] | n in pre.unvisited |
 		n.infinite = 1 implies {
 			post.graph[current][Int]
 -- TODO: Specify how to access the post graph version of a node.
 		}
 	}
+	*/
+	
 }
 
 --facts
@@ -70,7 +81,8 @@ fact edgeProperties {
 fact initialState {
 	first.unvisited = Node
 	pre.first.current = Source
-	all n: first.unvisited | n.infinite = 1 and n.distance = 0
+	all n: first.unvisited - Source | n.infinite = 1 and n.distance = 0
+	Source.infinite = 0 and Source.distance = 0
 	isConnected[first.graph]
 }
 
@@ -84,6 +96,10 @@ fact trace {
 }
 
 --preds
+pred isAdjacent[s: State, u: Node, v: Node] {
+	u -> v in unweightedEdges[s.graph]
+}
+
 pred isConnected[g: Node -> Int -> Node] {
 	all disj u,v: Node | (u->v) in ^(unweightedEdges[g])
 }
