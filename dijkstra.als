@@ -26,9 +26,9 @@
 open util/ordering[State]
 
 sig Node {
-	distance: Int,
-	infinite: Int,
-	previous: Node
+	--distance: Int,
+	--infinite: Int,
+	--previous: Node
 }
 
 one sig Source extends Node {}
@@ -37,8 +37,10 @@ one sig Sink extends Node {}
 
 sig State {
 	graph: Node -> Int -> Node,
-	path: Node -> Int -> Node,
-	unvisited: set Node
+	--path: Node -> Int -> Node,
+	unvisited: set Node,
+	distance: Node -> Int,
+	infinite: Node -> Int
 }
 
 
@@ -48,13 +50,34 @@ sig Event {
 	current: Node
 }{
 	current in pre.unvisited
-	--current.infinite = 0
-	no n: pre.unvisited - current | n.distance < current.distance and n.infinite = 1
-
-	all v : Node | isAdjacent[pre, current, v] implies post.
-
 	post.unvisited = pre.unvisited - current
+
 	post.graph = pre.graph
+
+	-- current is smallest distance among unvisited, non-infinite nodes
+	no n: pre.unvisited - current | pre.distance[n] < pre.distance[current] and pre.infinite[n] = 0
+
+	-- update distance variables of neighbors
+	all v : Node | isAdjacent[pre, current, v] implies {
+		-- if infinite or greater distance than current + incident edge
+		let new_dist = pre.distance[current] + pre.graph[current].v | {
+
+		 	pre.infinite[v] = 1 or pre.distance[v] > new_dist  implies {
+				post.infinite[v] = 0
+				post.distance[v] = new_dist
+			}
+			
+			pre.infinite[v] = 0 and pre.distance[v] < new_dist implies {
+				post.infinite[v] = 0
+				post.distance[v] = pre.distance[v]
+			}
+		}
+	}
+
+	all v : Node | not isAdjacent[pre, current, v] implies {
+		post.infinite[v] = pre.infinite[v]
+		post.distance[v] = pre.distance[v]
+	}
 	
 	--TODO: update distance variable of neighbors if new, shorter distance is possible
 	-- choose shortest neighbor and add it to the path
@@ -72,17 +95,19 @@ sig Event {
 
 --facts
 
-fact edgeProperties {
-	-- positive edge weights
-	all i : State.graph.Node[Node] | i > 0
-}
-
 
 fact initialState {
+
+	positiveEdges[first]
+
+	-- all unvisited
 	first.unvisited = Node
 	pre.first.current = Source
-	all n: first.unvisited - Source | n.infinite = 1 and n.distance = 0
-	Source.infinite = 0 and Source.distance = 0
+
+	-- mark all nodes besides source unvisited with distance = infinity
+	all n: first.unvisited - Source | first.	infinite[n] = 1 and first.distance[n] = 0
+	first.infinite[Source] = 0 and first.distance[Source] = 0
+
 	isConnected[first.graph]
 }
 
@@ -96,6 +121,11 @@ fact trace {
 }
 
 --preds
+
+pred positiveEdges[s : State] {
+	-- positive edge weights
+	all i : s.graph.Node[Node] | i > 0
+}
 pred isAdjacent[s: State, u: Node, v: Node] {
 	u -> v in unweightedEdges[s.graph]
 }
