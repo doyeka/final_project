@@ -36,7 +36,8 @@ sig State {
 	--path: Node -> Int -> Node,
 	unvisited: set Node,
 	distance: Node -> one Int,
-	infinite: Node -> one Int
+	infinite: Node -> one Int,
+	previous: Node -> Node
 }
 
 
@@ -61,16 +62,19 @@ sig Event {
 				pre.infinite[v] = 1 implies {
 					post.infinite[v] = 0
 					post.distance[v] = new_dist
+					post.previous[v] = current
 				}	 
 
 				pre.infinite[v] = 0 and pre.distance[v] >= new_dist implies {
 					post.infinite[v] = 0
 					post.distance[v] = new_dist
+					post.previous[v] = current
 				}	 
 			
 				pre.infinite[v] = 0 and pre.distance[v] < new_dist implies {
 					post.infinite[v] = 0
 					post.distance[v] = pre.distance[v]
+					post.previous[v] = pre.previous[v]
 				}
 			}
 		}
@@ -78,6 +82,7 @@ sig Event {
 		not isAdjacent[pre, current, v] implies {
 			post.infinite[v] = pre.infinite[v]
 			post.distance[v] = pre.distance[v]
+			post.previous[v] = pre.previous[v]
 		}
 	} 
 }
@@ -99,8 +104,10 @@ sig Event {
 
 
 fact initialState {
+	
+	no first.previous
 
-	positiveEdges[first]
+	edgeProperties[first]
 
 	-- all unvisited
 	first.unvisited = Node
@@ -124,9 +131,10 @@ fact trace {
 
 --preds
 
-pred positiveEdges[s : State] {
+pred edgeProperties[s : State] {
 	-- positive edge weights
 	all i : s.graph.Node[Node] | i > 0
+	all u, v : Node | one i : Int | u -> i -> v in s.graph 
 }
 
 pred isAdjacent[s: State, u: Node, v: Node] {
