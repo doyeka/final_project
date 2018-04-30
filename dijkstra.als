@@ -25,11 +25,7 @@
 
 open util/ordering[State]
 
-sig Node {
-	--distance: Int,
-	--infinite: Int,
-	--previous: Node
-}
+sig Node {}
 
 one sig Source extends Node {}
 
@@ -39,8 +35,8 @@ sig State {
 	graph: Node -> Int -> Node,
 	--path: Node -> Int -> Node,
 	unvisited: set Node,
-	distance: Node -> Int,
-	infinite: Node -> Int
+	distance: Node -> one Int,
+	infinite: Node -> one Int
 }
 
 
@@ -51,7 +47,6 @@ sig Event {
 }{
 	current in pre.unvisited
 	post.unvisited = pre.unvisited - current
-
 	post.graph = pre.graph
 
 	-- current is smallest distance among unvisited, non-infinite nodes
@@ -60,12 +55,22 @@ sig Event {
 	-- update distance variables of neighbors
 	all v : Node | isAdjacent[pre, current, v] implies {
 		-- if infinite or greater distance than current + incident edge
-		let new_dist = pre.distance[current] + pre.graph[current].v | {
+		let new_dist = plus[pre.distance[current], pre.graph[current].v] | {
 
-		 	pre.infinite[v] = 1 or pre.distance[v] > new_dist  implies {
+		 	pre.infinite[v] = 1 and pre.distance[v] >= new_dist implies {
 				post.infinite[v] = 0
 				post.distance[v] = new_dist
 			}
+
+			pre.infinite[v] = 1 and pre.distance[v] < new_dist implies {
+				post.inifinite[v] = 0
+				post.distance[v] = new_dist
+			} 
+
+			pre.infinite[v] = 0 and pre.distance[v] >= new_dist implies {
+				post.inifinite[v] = 0
+				post.distance[v] = new_dist
+			} 
 			
 			pre.infinite[v] = 0 and pre.distance[v] < new_dist implies {
 				post.infinite[v] = 0
@@ -126,6 +131,7 @@ pred positiveEdges[s : State] {
 	-- positive edge weights
 	all i : s.graph.Node[Node] | i > 0
 }
+
 pred isAdjacent[s: State, u: Node, v: Node] {
 	u -> v in unweightedEdges[s.graph]
 }
