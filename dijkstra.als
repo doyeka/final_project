@@ -53,36 +53,34 @@ sig Event {
 	no n: pre.unvisited - current | pre.distance[n] < pre.distance[current] and pre.infinite[n] = 0
 
 	-- update distance variables of neighbors
-	all v : Node | isAdjacent[pre, current, v] implies {
-		-- if infinite or greater distance than current + incident edge
-		let new_dist = plus[pre.distance[current], pre.graph[current].v] | {
+	all v : Node | {
+		isAdjacent[pre, current, v] implies {
+			-- if infinite or greater distance than current + incident edge
+			let new_dist = plus[pre.distance[current], pre.graph[current].v] | {
 
-		 	pre.infinite[v] = 1 and pre.distance[v] >= new_dist implies {
-				post.infinite[v] = 0
-				post.distance[v] = new_dist
-			}
+				pre.infinite[v] = 1 implies {
+					post.infinite[v] = 0
+					post.distance[v] = new_dist
+				}	 
 
-			pre.infinite[v] = 1 and pre.distance[v] < new_dist implies {
-				post.inifinite[v] = 0
-				post.distance[v] = new_dist
-			} 
-
-			pre.infinite[v] = 0 and pre.distance[v] >= new_dist implies {
-				post.inifinite[v] = 0
-				post.distance[v] = new_dist
-			} 
+				pre.infinite[v] = 0 and pre.distance[v] >= new_dist implies {
+					post.infinite[v] = 0
+					post.distance[v] = new_dist
+				}	 
 			
-			pre.infinite[v] = 0 and pre.distance[v] < new_dist implies {
-				post.infinite[v] = 0
-				post.distance[v] = pre.distance[v]
+				pre.infinite[v] = 0 and pre.distance[v] < new_dist implies {
+					post.infinite[v] = 0
+					post.distance[v] = pre.distance[v]
+				}
 			}
 		}
-	}
 
-	all v : Node | not isAdjacent[pre, current, v] implies {
-		post.infinite[v] = pre.infinite[v]
-		post.distance[v] = pre.distance[v]
-	}
+		not isAdjacent[pre, current, v] implies {
+			post.infinite[v] = pre.infinite[v]
+			post.distance[v] = pre.distance[v]
+		}
+	} 
+}
 	
 	--TODO: update distance variable of neighbors if new, shorter distance is possible
 	-- choose shortest neighbor and add it to the path
@@ -96,7 +94,6 @@ sig Event {
 	}
 	*/
 	
-}
 
 --facts
 
