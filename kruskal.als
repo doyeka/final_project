@@ -1,4 +1,5 @@
-open util/ordering[State]
+open prim as PRIM
+open util/ordering[this/State]
 
 /*
 	
@@ -13,14 +14,14 @@ open util/ordering[State]
 sig Node {}
 
 sig State {
-	graph: Node -> Int -> Node,
-	tree: Node -> Int -> Node
+	graph: this/Node -> Int -> this/Node,
+	tree: this/Node -> Int -> this/Node
 }
 
 sig Event {
-	pre: State,
-	post: State,
-	add: Node -> Int -> Node
+	pre: this/State,
+	post: this/State,
+	add: this/Node -> Int -> this/Node
 } {
 	-- Steps:
 	-- Identify minimum weight edge in the graph.
@@ -56,13 +57,13 @@ sig Event {
 
 }
 
-pred cheapestEdge[add: Node -> Int -> Node, g: Node -> Int -> Node] {
+pred cheapestEdge[add: this/Node -> Int -> this/Node, g: this/Node -> Int -> this/Node] {
 	all i: g.Node[Node] - add.Node[Node] | i > add.Node[Node]
 }
 
-pred acyclic[t:  Node -> Int -> Node] {
+pred acyclic[t: this/Node -> Int -> this/Node] {
 	let t' = unweightedEdges[t] | {
-		all u, v: Node | u -> v in t' implies v not in u.^(t' - (u -> v))
+		all u, v: this/Node | u -> v in t' implies v not in u.^(t' - (u -> v))
 	}
 }
 
@@ -72,47 +73,47 @@ fact positiveEdges {
 
 
 fact edgeProperties {
-	all u,v: Node | all s: State | all i: Int | {
+	all u,v: this/Node | all s: this/State | all i: Int | {
 		s->u->i->v in graph implies s->v->i->u in graph and {		--bidirectional
 			no j: Int - i | s->v->j->u in graph
 		}
 	}
 	-- positive edges
-	all i : State.graph.Node[Node] | i > 0
+	all i : State.graph.this/Node[this/Node] | i > 0
 }
 
 -- TODO: Constraints on Nodes/Edges/Trees so they are consistent between sigs.
 --		 Fill in event signature.
 
-pred isConnected[g: Node -> Int -> Node] {
-	all disj u,v: Node | (u->v) in ^(unweightedEdges[g])
+pred isConnected[g: this/Node -> Int -> this/Node] {
+	all disj u,v: this/Node | (u->v) in ^(unweightedEdges[g])
 }
 
 
 -- funs
-fun unweightedEdges[t: Node -> Int -> Node]: Node -> Node {
-	{u, v: Node | some i: Int | u -> i -> v in t}
+fun unweightedEdges[t: this/Node -> Int -> this/Node]: this/Node -> this/Node {
+	{u, v: this/Node | some i: Int | u -> i -> v in t}
 }
 
 --facts
 
 fact initialState {
-	no first.tree
-	isConnected[first.graph]
+	no first.(this/State <: tree)
+	this/isConnected[first.graph]
 }
 
 fact trace {
-	all s1: State - last | let s2 = s1.next |
-		one e: Event | e.pre = s1 and e.post = s2 
+	all s1: this/State - last | let s2 = s1.next |
+		some e: this/Event | e.pre = s1 and e.post = s2 
 }
 
 
 fact finalState {
-	Node in last.tree[Node][Int]
-	isConnected[last.tree]
+	this/Node in last.tree[Node][Int]
+	this/isConnected[last.tree]
 }
 
-run {} for 5 but 5 Node
+run {} for 5 but 5 this/Node
 
 
 

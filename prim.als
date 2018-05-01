@@ -118,7 +118,7 @@ fact initialState {
 
 fact trace {
 	all s1: State - last | let s2 = s1.next |
-		one e: Event | e.pre = s1 and e.post = s2 
+		some e: Event | e.pre = s1 and e.post = s2 
 }	
 
 fact finalState {
