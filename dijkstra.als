@@ -164,9 +164,4 @@ check dijkstraWin { positiveEdges[first] implies not anotherStepPossible[last]} 
 
 check dijkstraFail { (not positiveEdges[first]) implies not anotherStepPossible[last]} for 5 but 5 Node
 
-
-
-
-
-
 run {} for 5 but 5 Node

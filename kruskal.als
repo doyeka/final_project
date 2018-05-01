@@ -1,4 +1,4 @@
-open prim as PRIM
+--open prim as PRIM
 open util/ordering[this/State]
 
 /*
