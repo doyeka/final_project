@@ -29,8 +29,6 @@ sig Node {}
 
 one sig Source extends Node {}
 
-one sig Sink extends Node {}
-
 sig State {
 	graph: Node -> Int -> Node,
 	--path: Node -> Int -> Node,
@@ -47,15 +45,19 @@ sig Event {
 	current: Node
 }{
 	current in pre.unvisited
+
 	post.unvisited = pre.unvisited - current
 	post.graph = pre.graph
 
 	-- current is smallest distance among unvisited, non-infinite nodes
-	no n: pre.unvisited - current | pre.distance[n] < pre.distance[current] and pre.infinite[n] = 0
+	pre.infinite[current] = 1 implies no n : pre.unvisited - current | pre.infinite[n] = 0
+	no n: pre.unvisited - current | {
+		pre.distance[n] < pre.distance[current] and pre.infinite[n] = 0 
+	}
 
 	-- update distance variables of neighbors
 	all v : Node | {
-		isAdjacent[pre, current, v] implies {
+		isAdjacent[pre, current, v] and pre.infinite[current] = 0 implies {
 			-- if infinite or greater distance than current + incident edge
 			let new_dist = plus[pre.distance[current], pre.graph[current].v] | {
 
@@ -76,15 +78,13 @@ sig Event {
 					post.distance[v] = pre.distance[v]
 					post.previous[v] = pre.previous[v]
 				}
-			}
-		}
-
-		not isAdjacent[pre, current, v] implies {
+			} 
+		} else {
 			post.infinite[v] = pre.infinite[v]
 			post.distance[v] = pre.distance[v]
 			post.previous[v] = pre.previous[v]
 		}
-	} 
+	}  
 }
 	
 	--TODO: update distance variable of neighbors if new, shorter distance is possible
@@ -107,22 +107,19 @@ fact initialState {
 	
 	no first.previous
 
-	edgeProperties[first]
-
 	-- all unvisited
 	first.unvisited = Node
 	pre.first.current = Source
 
 	-- mark all nodes besides source unvisited with distance = infinity
-	all n: first.unvisited - Source | first.	infinite[n] = 1 and first.distance[n] = 0
+	all n: first.unvisited - Source | first.infinite[n] = 1 and first.distance[n] = 0
 	first.infinite[Source] = 0 and first.distance[Source] = 0
 
-	isConnected[first.graph]
+	--isConnected[first.graph]
 }
 
 fact finalState {
-	post.last.current = Sink
-	--Sink not in last.unvisited
+	no last.unvisited
 }
 
 fact trace {
@@ -131,10 +128,22 @@ fact trace {
 
 --preds
 
-pred edgeProperties[s : State] {
-	-- positive edge weights
+pred anotherStepPossible[s : State] {
+	some u, v : Node | {
+		isAdjacent[s, u, v]
+	 	plus[s.distance[u], s.graph[u].v] < s.distance[v]
+		s.infinite[u] = 0
+	}
+}
+
+fact oneEdgeWeight {
+	all s : State | all u, v : Node | {
+		u->v in unweightedEdges[s.graph] implies #(s.graph.u[v]) = 1
+	}
+}
+
+pred positiveEdges[s : State] {
 	all i : s.graph.Node[Node] | i > 0
-	all u, v : Node | one i : Int | u -> i -> v in s.graph 
 }
 
 pred isAdjacent[s: State, u: Node, v: Node] {
@@ -150,5 +159,14 @@ pred isConnected[g: Node -> Int -> Node] {
 fun unweightedEdges[t: Node -> Int -> Node]: Node -> Node {
 	{u, v: Node | some i: Int | u -> i -> v in t}
 }
+
+check dijkstraWin { positiveEdges[first] implies not anotherStepPossible[last]} for 5 but 5 Node
+
+check dijkstraFail { (not positiveEdges[first]) implies not anotherStepPossible[last]} for 5 but 5 Node
+
+
+
+
+
 
 run {} for 5 but 5 Node

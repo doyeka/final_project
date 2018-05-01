@@ -96,18 +96,6 @@ sig Event {
 	} 
 }
 	
-	--TODO: update distance variable of neighbors if new, shorter distance is possible
-	-- choose shortest neighbor and add it to the path
-	-- set current to the next node along the path
-	/*
-	all n: pre.graph[current][Int] | n in pre.unvisited |
-		n.infinite = 1 implies {
-			post.graph[current][Int]
--- TODO: Specify how to access the post graph version of a node.
-		}
-	}
-	*/
-	
 
 --facts
 fact negativeCycleFoundAtEnd {
@@ -134,23 +122,31 @@ fact initialState {
 }
 
 fact finalState {
-	--Sink not in last.unvisited
-	-- TODO: Say there is no *possible* current for which this would happen
-	let penultimate = post.last.pre | {
-		some n : last.graph.Node.Int + last.graph[Node][Int] | last.distance[n] != penultimate.distance[n] implies {
-			last.isNegativeCycle = 1
-		} else {
-			last.isNegativeCycle = 0
-		}
-		
-	}
+	anotherStepPossible[last] implies last.isNegativeCycle = 1 else last.isNegativeCycle = 0
 }
 
+fact managableEdgeWeights {
+	all i : Int | i in first.graph.Node[Node] implies { i > -10 and i < 10}
+}
+
+/*
 fact trace {
-	all s1: State - last | let s2 = s1.next | one e: Event | s1 = e.pre and s2 = e.post
+	all s1 : State - last | let s2 = s1.next | some e: Event | s1 = e.pre and s2 = e.post
+}
+*/
+fact traces {
+  all s: State - last |
+    some e: Event | e.pre = s and e.post = s.next
 }
 
 --preds
+
+pred anotherStepPossible[s : State] {
+	some u, v : Node | {
+		isAdjacent[s, u, v]
+	 	plus[s.distance[u], s.graph[u].v] < s.distance[v]
+	}
+}
 
 pred edgeProperties[s : State] {
 	-- positive edge weights
@@ -172,4 +168,4 @@ fun unweightedEdges[t: Node -> Int -> Node]: Node -> Node {
 	{u, v: Node | some i: Int | u -> i -> v in t}
 }
 
-run {} for 5 but 2 Node, 5 Int
+run {} for 10 but 3 Node, 9 Event, 6 Int
