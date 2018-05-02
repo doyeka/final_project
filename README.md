@@ -1,5 +1,5 @@
 # Logical Model of Graphing Algorithms
-
+ 
 We used the MIT logical modeling software _alloy_ to model Prim's,
 Kruskal's, and Bellman-Ford algorithms.
 
