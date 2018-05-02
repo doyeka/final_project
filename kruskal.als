@@ -1,15 +1,6 @@
 open graph_definitions as GRAPH
 open util/ordering[State]
 
-/*
-
-    create a graph F (a set of trees), where each vertex in the graph is a separate tree
-    create a set S containing all the edges in the graph
-    while S is nonempty and F is not yet spanning
-        remove an edge with minimum weight from S
-        if the removed edge connects two different trees then add it to the forest F, combining two trees into a single tree
-
-*/
 sig State {
 	graph: Node -> Int -> Node,
 	tree: Node -> Int -> Node
@@ -20,14 +11,9 @@ sig Event {
 	post: State,
 	add: GRAPH/Node -> Int -> GRAPH/Node
 } {
-	-- Steps:
-	-- Identify minimum weight edge in the graph.
-	-- Remove the edge from remainingEdges.
-	-- If the removed edge connectes two different trees, add the edge into the forest
-	-- and combine the two trees into one.
 	add in pre.graph
 	add not in pre.tree
-	#(add.Node.Int) = 1 and #(add[Node][Int])	= 1   --For some reason "#" only works for unary sets
+	#(add.Node.Int) = 1 and #(add[Node][Int]) = 1
 
 	cheapestEdge[add, pre.graph]
 
@@ -40,59 +26,54 @@ sig Event {
 			post.tree = pre.tree
 		}
 	}
-
-	/*
-	Issue: Change so that trees can be made with low cost self loops
-
-	Right now,  is over-constrained to the point that the lowest
-	cost tree must just *happen* to be acyclic and perfect.
-
-	Proposed solution: We could change it so that whenever add
-	creates a cycle, we just remove the edge from the graph.
-	*/
 	acyclic[pre.tree] and acyclic[post.tree]
-
 }
 
+/*
+Ensures the edge 'add' is the cheapest edge in the graph relation 'g'.
+*/
 pred cheapestEdge[add: GRAPH/Node -> Int -> GRAPH/Node, g: GRAPH/Node -> Int -> GRAPH/Node] {
 	all i: g.Node[Node] - add.Node[Node] | i > add.Node[Node]
 }
 
+/*
+Ensures a graph relation 't' is acyclic.
+*/
 pred acyclic[t: GRAPH/Node -> Int -> GRAPH/Node] {
 	let t' = unweightedEdges[t] | {
 		all u, v: GRAPH/Node | u -> v in t' implies v not in u.^(t' - (u -> v))
 	}
 }
 
-
+/*
+Implementation of bidriection edges.
+*/
 fact edgeProperties {
 	all u,v: GRAPH/Node | all s: State | all i: Int | {
-		s->u->i->v in graph implies s->v->i->u in graph and {		--bidirectional
+		s->u->i->v in graph implies s->v->i->u in graph and {
 			no j: Int - i | s->v->j->u in graph
 		}
 	}
-	-- positive edges
-	all i : State.graph.GRAPH/Node[GRAPH/Node] | i > 0
 }
 
--- TODO: Constraints on Nodes/Edges/Trees so they are consistent between sigs.
---		 Fill in event signature.
-
+/*
+Ensures the graph relation 'g' is connected.
+*/
 pred isConnected[g: GRAPH/Node -> Int -> GRAPH/Node] {
 	all disj u,v: GRAPH/Node | (u->v) in ^(unweightedEdges[g])
 }
 
-
 -- funs
+/*
+Returns the unweighted graph relation for the weighted graph relation 'g'.
+*/
 fun unweightedEdges[t: GRAPH/Node -> Int -> GRAPH/Node]: GRAPH/Node -> GRAPH/Node {
 	{u, v: GRAPH/Node | some i: Int | u -> i -> v in t}
 }
 
 --facts
-
 fact initialState {
 	no first.(State <: tree)
-	this/isConnected[first.graph]
 }
 
 fact trace {
@@ -100,16 +81,10 @@ fact trace {
 		some e: Event | e.pre = s1 and e.post = s2
 }
 
-
 fact finalState {
 	GRAPH/Node in last.tree[Node][Int]
 	this/isConnected[last.tree]
 }
 
-run {} for 5 but 5 GRAPH/Node
-
-
-
-
-
-
+-- Kruskal's finds the minimum spanning tree if given a connected graph.
+run {this/isConnected[first.graph]} for 5 but 5 GRAPH/Node
