@@ -10,8 +10,12 @@ pred sameGraph[g1 : KRUSKAL/Node -> Int -> KRUSKAL/Node, g2 : PRIM/Node -> Int -
 }
 */
 
-pred sameInSameOut {
-	KRUSKAL/first.graph = PRIM/first.graph implies KRUSKAL/last.tree = PRIM/last.tree
+pred sameIn {
+	KRUSKAL/first.graph = PRIM/first.graph
+}
+
+pred sameOut {
+	KRUSKAL/last.tree = PRIM/last.tree
 }
 
 pred sameEdgeWeight {
@@ -21,28 +25,29 @@ pred sameEdgeWeight {
 	}
 }
 
-pred reason {
-	some u, v : GRAPH/Node | some i : Int | {
+pred nonUniqueMST {
+	some disj u, v : GRAPH/Node | some i : Int | {
 		u -> i -> v in PRIM/last.graph - PRIM/last.tree 
 		not KRUSKAL/acyclic[u -> i -> v + PRIM/last.tree]
-		let cycle = getSmallestCycle[PRIM/last.tree] | {
-			KRUSKAL/cheapestEdge[u -> i -> v , cycle & PRIM/last.tree]
+		-- smallest edge in cycle intersecting with last.tree
+		let cycle = getCycle[PRIM/last.tree + u -> i -> v] {
+			some w, x : Node | w -> x in cycle and PRIM/getWeight[PRIM/first.graph, w->x] = i
 		}	
 	}
 }
+
+
 
 pred smallestCycle[g : GRAPH/Node -> Int -> GRAPH/Node] {
 	no u, v: GRAPH/Node | no i : Int | u -> i -> v in g and not KRUSKAL/acyclic[g - u -> i -> v]
 }
 
-fun getSmallestCycle[g : GRAPH/Node -> Int -> GRAPH/Node] : GRAPH/Node -> GRAPH/Node {
-	{t : KRUSKAL/unweightedEdges[g] | smallestCycle[t]}
+fun getCycle[g : GRAPH/Node -> Int -> GRAPH/Node] : GRAPH/Node -> GRAPH/Node {
+	{u, v: GRAPH/Node | u -> v in ^(PRIM/unweightedEdges[g] - u -> v) and u -> v in PRIM/unweightedEdges[g]}
 }
 
-check sameOutput {sameInSameOut}
+check {sameIn and not sameOut implies nonUniqueMST}
 
-check unweighted {not sameInSameOut implies reason}
-
-run {sameEdgeWeight and KRUSKAL/first.graph = PRIM/first.graph}
+check {not nonUniqueMST implies (sameIn and sameOut)}
 
 
